@@ -12,7 +12,7 @@ import { init } from "d2";
 import {HashRouter} from "react-router-dom";
 import { Provider } from '@dhis2/app-runtime'
 
-const basicAuth = "Basic " + btoa("ahmed:Atwabi@20");
+const basicAuth = "Basic " + btoa("ahmed:@Ahmed20");
 
 const appConfig = {
     baseUrl: 'https://www.namis.org/main/',
