@@ -11,7 +11,7 @@ import {
     MDBContainer,
     MDBRow,
 } from "mdbreact";
-import {Select, Button, Dropdown, Menu, TreeSelect, Modal, Spin} from "antd";
+import {Select, Button, Dropdown, Menu, TreeSelect, Modal, Spin, Progress} from "antd";
 import {getInstance} from "d2";
 import Header from "@dhis2/d2-ui-header-bar"
 import {DownOutlined} from "@ant-design/icons";
@@ -34,15 +34,17 @@ const MainForm = (props) => {
     const [D2, setD2] = useState();
     const [modal, setModal] = useState(false);
     const [alertModal, setAlertModal] = useState(false);
+    const [status, setStatus] = useState(0);
+
+    const handleCancel = () => {
+        setAlertModal(false);
+    };
 
     getInstance().then(d2 =>{
         setD2(d2);
     });
 
     useEffect(() => {
-        console.log(props.organizationalUnits)
-        console.log(props.programs)
-        console.log(props.treeMarkets)
         setOrgUnits(props.organizationalUnits);
         setPrograms(props.programs);
         setTreeMarkets(props.treeMarkets);
@@ -132,6 +134,25 @@ const MainForm = (props) => {
         </Menu>
     );
 
+    const handleTransfer = () => {
+
+        setAlertModal(true);
+        var progID = selectedProgram;
+        console.log(flattenedUnits)
+        console.log(progID);
+
+        var number = 0;
+        flattenedUnits.map((unit, index) => {
+
+            number = ((index+1)/flattenedUnits.length) * 100;
+            var rounded = Math.round(number * 10) / 10
+            setStatus(rounded);
+            //if(index === flattenedUnits.length - 1){
+                //console.log("last but one")
+            //}
+        })
+    }
+
 
     return (
         <div>
@@ -153,6 +174,16 @@ const MainForm = (props) => {
                             </div> : null}
 
                             <hr/>
+
+                            <Modal title="Alert" visible={alertModal} onOk={()=>{}} onCancel={()=>{handleCancel()}}>
+                                <div className="d-flex flex-column w-100 align-items-center">
+                                    <MDBCardText>
+                                        {status === 100 ? <strong>Successfully transferred events</strong> : <strong>transferring events...</strong>}
+                                    </MDBCardText>
+                                    <Progress type="circle" percent={status} />
+                                </div>
+
+                            </Modal>
 
                             <MDBContainer className="pl-5 mt-3">
                                 <MDBRow>
@@ -231,7 +262,8 @@ const MainForm = (props) => {
 
                             <div className="text-center py-4 mt-2">
 
-                                <MDBBtn color="cyan" className="text-white" onClick={() => {
+                                <MDBBtn color="mdb-color" rounded className="text-white" onClick={() => {
+                                    handleTransfer();
                                 }}>
                                     transfer{showLoading ? <div className="spinner-border mx-2 text-white spinner-border-sm" role="status">
                                     <span className="sr-only">Loading...</span>
