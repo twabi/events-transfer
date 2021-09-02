@@ -36,6 +36,7 @@ const MainForm = (props) => {
     const [alertModal, setAlertModal] = useState(false);
     const [status, setStatus] = useState(0);
     const [exception, setException] = useState(false);
+    const [trackedInstances, setTrackedInstances] = useState([]);
 
     const handleCancel = () => {
         setAlertModal(false);
@@ -138,8 +139,18 @@ const MainForm = (props) => {
         if((fuzz.partial_ratio(nameOne, nameTwo) > 60) &&
             (fuzz.token_set_ratio(nameOne, nameTwo) > 70) && (fuzz.ratio(nameOne, nameTwo) > 80)){
            console.log("similar crops");
+            a.enrollments = [...a.enrollments, ...b.enrollments]
+            var indexA = trackedInstances.findIndex(x => x.trackedEntityInstance === b.trackedEntityInstance);
+            trackedInstances[indexA].enrollments = a.enrollments;
+
+            var indexB = trackedInstances.findIndex(x => x.trackedEntityInstance === b.trackedEntityInstance);
+            trackedInstances.splice(indexB, 1);
+            console.log(trackedInstances);
+
+            return a;
         } else {
-            console.log("none similar")
+            console.log("none similar");
+
         }
     }
 
@@ -171,11 +182,11 @@ const MainForm = (props) => {
                                 setException(false)
                             }
 
-
                             var instanceArray = [];
                             instanceArray = response.trackedEntityInstances;
+                            setTrackedInstances(instanceArray);
                             instanceArray.sort(checkName);
-                            //console.log()
+                            console.log(trackedInstances);
 
                         })
                 });
