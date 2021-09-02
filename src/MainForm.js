@@ -40,7 +40,7 @@ const MainForm = (props) => {
     const [alertModal, setAlertModal] = useState(false);
     const [status, setStatus] = useState(0);
     const [exception, setException] = useState(false);
-    const {message, setMessage} = useState("Found no instances to transfer");
+    const {message, setMessageText} = useState("Found no instances to transfer");
     const [trackedInstances, setTrackedInstances] = useState([]);
 
     const handleCancel = () => {
@@ -181,7 +181,8 @@ const MainForm = (props) => {
                         .then((response) => {
                             console.log(response.trackedEntityInstances);
                             if(response.trackedEntityInstances.length === 0){
-                                setMessage("Found no instances to transfer");
+                                //console.log(message);
+                                //setMessageText("Found no instances to transfer");
                                 setException(true);
                             } else {
                                 setException(false)
@@ -279,7 +280,7 @@ const MainForm = (props) => {
                                     })
                                     .catch((error) => {
                                         setException(true);
-                                        setMessage("Failed to post instances due to an error : " + error.message);
+                                        setMessageText("Failed to post instances due to an error : " + error.message);
                                         console.log("Failed to post instances");
                                     });
 
