@@ -36,7 +36,7 @@ const MainForm = (props) => {
     const [treeValue, setTreeValue] = useState();
     const [flattenedUnits, setFlattenedUnits] = useState([]);
     const [D2, setD2] = useState();
-    const [modal, setModal] = useState(false);
+    const [modal, setModal] = useState();
     const [alertModal, setAlertModal] = useState(false);
     const [status, setStatus] = useState(0);
     const [exception, setException] = useState(false);
@@ -183,6 +183,7 @@ const MainForm = (props) => {
                             if(response.trackedEntityInstances.length === 0){
                                 //console.log(message);
                                 //setMessageText("Found no instances to transfer");
+                                setModal("Found no instances to transfer")
                                 setException(true);
                             } else {
                                 setException(false)
@@ -193,7 +194,7 @@ const MainForm = (props) => {
                             setTrackedInstances(instanceArray);
                             instanceArray.sort(checkName);
 
-                            //console.log(trackedInstances);
+                            console.log(trackedInstances);
                             var enrolmentArray = [];
                             var eventsArray = [];
 
@@ -280,7 +281,7 @@ const MainForm = (props) => {
                                     })
                                     .catch((error) => {
                                         setException(true);
-                                        setMessageText("Failed to post instances due to an error : " + error.message);
+                                        setModal("Failed to post instances due to an error : " + error.message);
                                         console.log("Failed to post instances");
                                     });
 
@@ -317,7 +318,7 @@ const MainForm = (props) => {
                             <Modal title="Alert" visible={alertModal} onOk={()=>{}} onCancel={()=>{handleCancel()}}>
                                 <div className="d-flex flex-column w-100 align-items-center">
                                     <MDBCardText>
-                                        {exception ? <strong>{message}</strong> :
+                                        {exception ? <strong>{modal}</strong> :
                                             <>{status === 100 ? <strong>Successfully transferred events</strong> : <strong>transferring events...</strong>}</>
                                         }
 
