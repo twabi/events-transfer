@@ -17,6 +17,10 @@ import Header from "@dhis2/d2-ui-header-bar"
 import {DownOutlined} from "@ant-design/icons";
 
 const fuzz = require("fuzzball");
+const basicAuth = "Basic " + btoa("ahmed:Atwabi@20");
+const eventsUrl = `https://covmw.com/namistest/api/events`
+const instanceUrl = `https://covmw.com/namistest/api/trackedEntityInstances`
+const enrolUrl = `https://covmw.com/namistest/api/enrollments`
 const MainForm = (props) => {
 
     var orgUnitFilters = ["Filter By", "Markets"];
@@ -36,6 +40,7 @@ const MainForm = (props) => {
     const [alertModal, setAlertModal] = useState(false);
     const [status, setStatus] = useState(0);
     const [exception, setException] = useState(false);
+    const {message, setMessage} = useState("Found no instances to transfer");
     const [trackedInstances, setTrackedInstances] = useState([]);
 
     const handleCancel = () => {
@@ -169,14 +174,14 @@ const MainForm = (props) => {
                 .then((d2) => {
 
                     number = ((index+1)/flattenedUnits.length) * 100;
-                    var rounded = Math.round(number * 10) / 10
-                    setStatus(rounded);
+
 
                     const endpoint = `trackedEntityInstances.json?ou=${unit.id}&program=${progID}&fields=*`;
                     d2.Api.getApi().get(endpoint)
                         .then((response) => {
                             console.log(response.trackedEntityInstances);
                             if(response.trackedEntityInstances.length === 0){
+                                setMessage("Found no instances to transfer");
                                 setException(true);
                             } else {
                                 setException(false)
@@ -186,9 +191,102 @@ const MainForm = (props) => {
                             instanceArray = response.trackedEntityInstances;
                             setTrackedInstances(instanceArray);
                             instanceArray.sort(checkName);
-                            console.log(trackedInstances);
 
-                        })
+                            //console.log(trackedInstances);
+                            var enrolmentArray = [];
+                            var eventsArray = [];
+
+                            trackedInstances.map((instance) => {
+                                enrolmentArray = enrolmentArray.concat([...instance.enrollments]);
+                                instance.enrollments.map((enrol) => {
+                                    eventsArray = eventsArray.concat([...enrol.events]);
+                                });
+
+                                fetch(instanceUrl, {
+                                    method: 'POST',
+                                    body: JSON.stringify(instance),
+                                    headers: {
+                                        'Authorization' : basicAuth,
+                                        'Content-type': 'application/json',
+                                    },
+                                    credentials: "include"
+
+                                })
+                                    .then(response => {
+                                        console.log(response);
+
+                                        if(response.status === 200 || response.status === 201){
+                                            console.log("posted instances");
+                                            var rounded = Math.round(number * 10) / 10
+                                            setStatus(rounded);
+                                            setException(false);
+
+                                            enrolmentArray.map((enrol) => {
+                                                fetch(enrolUrl, {
+                                                    method: 'POST',
+                                                    body: JSON.stringify(enrol),
+                                                    headers: {
+                                                        'Authorization' : basicAuth,
+                                                        'Content-type': 'application/json',
+                                                    },
+                                                    credentials: "include"
+
+                                                })
+                                                    .then(response => {
+                                                        console.log(response);
+
+                                                        if(response.status === 200 || response.status === 201){
+                                                            console.log("posted enrolments");
+
+                                                            eventsArray.map((event) => {
+                                                                fetch(eventsUrl, {
+                                                                    method: 'POST',
+                                                                    body: JSON.stringify(event),
+                                                                    headers: {
+                                                                        'Authorization' : basicAuth,
+                                                                        'Content-type': 'application/json',
+                                                                    },
+                                                                    credentials: "include"
+
+                                                                })
+                                                                    .then(response => {
+                                                                        console.log(response);
+
+                                                                        if(response.status === 200 || response.status === 201){
+                                                                            console.log("posted events");
+                                                                        } else {
+                                                                            console.log("Failed to post events");
+                                                                        }
+                                                                    })
+                                                                    .catch((error) => {
+                                                                        console.log("Failed to post events");
+                                                                    });
+                                                            });
+                                                        } else {
+                                                            console.log("Failed to post enrolments");
+                                                        }
+                                                    })
+                                                    .catch((error) => {
+                                                        console.log("Failed to post enrolments");
+                                                    });
+                                            });
+
+
+
+                                        } else {
+                                            console.log("Failed to post instances");
+                                        }
+                                    })
+                                    .catch((error) => {
+                                        setException(true);
+                                        setMessage("Failed to post instances due to an error : " + error.message);
+                                        console.log("Failed to post instances");
+                                    });
+
+                            });
+
+
+                        });
                 });
         })
     }
@@ -218,7 +316,7 @@ const MainForm = (props) => {
                             <Modal title="Alert" visible={alertModal} onOk={()=>{}} onCancel={()=>{handleCancel()}}>
                                 <div className="d-flex flex-column w-100 align-items-center">
                                     <MDBCardText>
-                                        {exception ? <strong>Found no instances to transfer</strong> :
+                                        {exception ? <strong>{message}</strong> :
                                             <>{status === 100 ? <strong>Successfully transferred events</strong> : <strong>transferring events...</strong>}</>
                                         }
 
