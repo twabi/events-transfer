@@ -11,12 +11,12 @@ import {
     MDBContainer,
     MDBRow,
 } from "mdbreact";
-import {Select, Button, Dropdown, Menu, TreeSelect, Modal, Spin, Progress} from "antd";
+import {Select, Button, Dropdown, Menu, TreeSelect, Modal, Progress} from "antd";
 import {getInstance} from "d2";
 import Header from "@dhis2/d2-ui-header-bar"
 import {DownOutlined} from "@ant-design/icons";
 
-
+const fuzz = require("fuzzball");
 const MainForm = (props) => {
 
     var orgUnitFilters = ["Filter By", "Markets"];
@@ -35,6 +35,7 @@ const MainForm = (props) => {
     const [modal, setModal] = useState(false);
     const [alertModal, setAlertModal] = useState(false);
     const [status, setStatus] = useState(0);
+    const [exception, setException] = useState(false);
 
     const handleCancel = () => {
         setAlertModal(false);
@@ -84,9 +85,7 @@ const MainForm = (props) => {
 
     const onSelectTree = (value, node) => {
         //setOrgUnit(selectedOrgUnit => [...selectedOrgUnit, node]);
-        //setSelectedOrgUnit(node);
-        console.log(node);
-
+        //setSelectedOrgUnit(node);     vbn
         var children = extractChildren(node);
 
         if(children === undefined){
@@ -103,8 +102,6 @@ const MainForm = (props) => {
         console.log(selectedOption);
         setSelectedProgram(selectedOption);
     };
-
-
 
     const handleOrgFilter = (value) => {
         setOrgFilter(value);
@@ -134,22 +131,54 @@ const MainForm = (props) => {
         </Menu>
     );
 
+    function checkName (a, b){
+        var nameOne = a.attributes[0].value;
+        var nameTwo = b.attributes[0].value;
+
+        if((fuzz.partial_ratio(nameOne, nameTwo) > 60) &&
+            (fuzz.token_set_ratio(nameOne, nameTwo) > 70) && (fuzz.ratio(nameOne, nameTwo) > 80)){
+           console.log("similar crops");
+        } else {
+            console.log("none similar")
+        }
+    }
+
     const handleTransfer = () => {
 
         setAlertModal(true);
         var progID = selectedProgram;
-        console.log(flattenedUnits)
-        console.log(progID);
 
         var number = 0;
         flattenedUnits.map((unit, index) => {
-
-            number = ((index+1)/flattenedUnits.length) * 100;
-            var rounded = Math.round(number * 10) / 10
-            setStatus(rounded);
             //if(index === flattenedUnits.length - 1){
                 //console.log("last but one")
             //}
+
+            getInstance()
+                .then((d2) => {
+
+                    number = ((index+1)/flattenedUnits.length) * 100;
+                    var rounded = Math.round(number * 10) / 10
+                    setStatus(rounded);
+
+                    const endpoint = `trackedEntityInstances.json?ou=${unit.id}&program=${progID}&fields=*`;
+                    d2.Api.getApi().get(endpoint)
+                        .then((response) => {
+                            console.log(response.trackedEntityInstances);
+                            if(response.trackedEntityInstances.length === 0){
+                                setException(true);
+                            } else {
+                                setException(false)
+                            }
+
+
+                            var instanceArray = [];
+                            instanceArray = response.trackedEntityInstances;
+                            instanceArray.sort(checkName);
+                            //console.log()
+
+                        })
+                });
         })
     }
 
@@ -178,9 +207,12 @@ const MainForm = (props) => {
                             <Modal title="Alert" visible={alertModal} onOk={()=>{}} onCancel={()=>{handleCancel()}}>
                                 <div className="d-flex flex-column w-100 align-items-center">
                                     <MDBCardText>
-                                        {status === 100 ? <strong>Successfully transferred events</strong> : <strong>transferring events...</strong>}
+                                        {exception ? <strong>Found no instances to transfer</strong> :
+                                            <>{status === 100 ? <strong>Successfully transferred events</strong> : <strong>transferring events...</strong>}</>
+                                        }
+
                                     </MDBCardText>
-                                    <Progress type="circle" percent={status} />
+                                    <Progress type="circle" percent={status} status={ exception ? "exception" : "success"}/>
                                 </div>
 
                             </Modal>
