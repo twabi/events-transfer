@@ -64,6 +64,7 @@ const MainForm = (props) => {
 
     const onSelect = (value, node) => {
         //setSelectedOrgUnit(node);
+        console.log(node);
 
         var children = extractChildren(node)
         var tempArray = [];
@@ -86,7 +87,6 @@ const MainForm = (props) => {
 
     const handleTree = (value, label, extra) => {
         setTreeValue(value)
-        //console.log(value);
     };
 
     const onSelectTree = (value, node) => {
@@ -141,21 +141,20 @@ const MainForm = (props) => {
         var nameOne = a.attributes[0].value;
         var nameTwo = b.attributes[0].value;
 
+
         if((fuzz.partial_ratio(nameOne, nameTwo) > 60) &&
             (fuzz.token_set_ratio(nameOne, nameTwo) > 70) && (fuzz.ratio(nameOne, nameTwo) > 80)){
-           console.log("similar crops");
+            console.log("similar crops");
             a.enrollments = [...a.enrollments, ...b.enrollments]
             var indexA = trackedInstances.findIndex(x => x.trackedEntityInstance === b.trackedEntityInstance);
+            console.log(trackedInstances[indexA], a.enrollments);
             trackedInstances[indexA].enrollments = a.enrollments;
 
             var indexB = trackedInstances.findIndex(x => x.trackedEntityInstance === b.trackedEntityInstance);
             trackedInstances.splice(indexB, 1);
-            console.log(trackedInstances);
+
 
             return a;
-        } else {
-            console.log("none similar");
-
         }
     }
 
@@ -165,19 +164,18 @@ const MainForm = (props) => {
         var progID = selectedProgram;
 
         var number = 0;
+        console.log(flattenedUnits);
         flattenedUnits.map((unit, index) => {
             //if(index === flattenedUnits.length - 1){
                 //console.log("last but one")
             //}
 
-            getInstance()
-                .then((d2) => {
+
 
                     number = ((index+1)/flattenedUnits.length) * 100;
 
-
                     const endpoint = `trackedEntityInstances.json?ou=${unit.id}&program=${progID}&fields=*`;
-                    d2.Api.getApi().get(endpoint)
+                    D2.Api.getApi().get(endpoint)
                         .then((response) => {
                             console.log(response.trackedEntityInstances);
                             if(response.trackedEntityInstances.length === 0){
@@ -284,12 +282,8 @@ const MainForm = (props) => {
                                         setModal("Failed to post instances due to an error : " + error.message);
                                         console.log("Failed to post instances");
                                     });
-
                             });
-
-
                         });
-                });
         })
     }
 

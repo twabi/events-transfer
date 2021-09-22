@@ -15,7 +15,7 @@ import { Provider } from '@dhis2/app-runtime'
 const basicAuth = "Basic " + btoa("ahmed:@Ahmed20");
 
 const appConfig = {
-    baseUrl: 'https://www.namis.org/main/',
+    baseUrl: 'https://covmw.com/maintest/',
     apiVersion: 0,
     headers:{
         Authorization: basicAuth,
@@ -24,7 +24,7 @@ const appConfig = {
     }
 }
 
-const developmentServer = "https://www.namis.org/main/api/";
+const developmentServer = "https://covmw.com/maintest/api/";
 const withBaseUrl = (baseUrl) => {
     init({
         baseUrl: baseUrl,
