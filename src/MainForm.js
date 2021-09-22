@@ -40,7 +40,8 @@ const MainForm = (props) => {
     const [alertModal, setAlertModal] = useState(false);
     const [status, setStatus] = useState(0);
     const [exception, setException] = useState(false);
-    const {message, setMessageText} = useState("Found no instances to transfer");
+    const [statusText, setStatusText] = useState("normal");
+    const [messageText, setMessageText] = useState("Found no instances to transfer");
     const [trackedInstances, setTrackedInstances] = useState([]);
 
     const handleCancel = () => {
@@ -160,7 +161,10 @@ const MainForm = (props) => {
 
     const handleTransfer = () => {
 
+        setShowLoading(true);
+        setMessageText("Looking trackedEntityInstances....");
         setAlertModal(true);
+        setStatus(10);
         var progID = selectedProgram;
 
         var number = 0;
@@ -170,120 +174,127 @@ const MainForm = (props) => {
                 //console.log("last but one")
             //}
 
+        number = ((index+1)/flattenedUnits.length) * 100;
 
+        const endpoint = `trackedEntityInstances.json?ou=${unit.id}&program=${progID}&fields=*`;
+        D2.Api.getApi().get(endpoint)
+            .then((response) => {
+                console.log(response.trackedEntityInstances);
+                if(response.trackedEntityInstances.length === 0){
+                    //console.log(message);
+                    //setMessageText("Found no instances to transfer");
+                    setMessageText("Found no trackedEntityInstances  to transfer")
+                    setStatusText("exception");
+                    setShowLoading(false);
+                } else {
+                    //setException(false);
+                    setMessageText("Found " +response.trackedEntityInstances.length+" instances. Transferring events.....")
+                }
 
-                    number = ((index+1)/flattenedUnits.length) * 100;
+                var instanceArray = [];
+                instanceArray = response.trackedEntityInstances;
+                setTrackedInstances(instanceArray);
+                instanceArray.sort(checkName);
 
-                    const endpoint = `trackedEntityInstances.json?ou=${unit.id}&program=${progID}&fields=*`;
-                    D2.Api.getApi().get(endpoint)
-                        .then((response) => {
-                            console.log(response.trackedEntityInstances);
-                            if(response.trackedEntityInstances.length === 0){
-                                //console.log(message);
-                                //setMessageText("Found no instances to transfer");
-                                setModal("Found no instances to transfer")
-                                setException(true);
-                            } else {
-                                setException(false)
-                            }
+                console.log(trackedInstances);
+                setStatus(50);
+                var enrolmentArray = [];
+                var eventsArray = [];
 
-                            var instanceArray = [];
-                            instanceArray = response.trackedEntityInstances;
-                            setTrackedInstances(instanceArray);
-                            instanceArray.sort(checkName);
+                trackedInstances.map((instance) => {
+                    enrolmentArray = enrolmentArray.concat([...instance.enrollments]);
+                    instance.enrollments.map((enrol) => {
+                        eventsArray = eventsArray.concat([...enrol.events]);
+                    });
 
-                            console.log(trackedInstances);
-                            var enrolmentArray = [];
-                            var eventsArray = [];
+                    fetch(instanceUrl, {
+                        method: 'POST',
+                        body: JSON.stringify(instance),
+                        headers: {
+                            'Authorization' : basicAuth,
+                            'Content-type': 'application/json',
+                        },
+                        credentials: "include"
 
-                            trackedInstances.map((instance) => {
-                                enrolmentArray = enrolmentArray.concat([...instance.enrollments]);
-                                instance.enrollments.map((enrol) => {
-                                    eventsArray = eventsArray.concat([...enrol.events]);
+                    })
+                        .then(response => {
+                            console.log(response);
+
+                            if(response.status === 200 || response.status === 201){
+                                console.log("posted instances");
+                                setMessageText("Successfully posted trackedEntityInstances.");
+                                setStatusText("success");
+                                setShowLoading(false);
+                                setException(false);
+
+                                var rounded = Math.round(number * 10) / 10
+                                setStatus(rounded);
+                                setException(false);
+
+                                enrolmentArray.map((enrol) => {
+                                    fetch(enrolUrl, {
+                                        method: 'POST',
+                                        body: JSON.stringify(enrol),
+                                        headers: {
+                                            'Authorization' : basicAuth,
+                                            'Content-type': 'application/json',
+                                        },
+                                        credentials: "include"
+
+                                    })
+                                        .then(response => {
+                                            console.log(response);
+
+                                            if(response.status === 200 || response.status === 201){
+                                                console.log("posted enrolments");
+                                                setMessageText("Successfully posted Enrollments.");
+
+                                                eventsArray.map((event) => {
+                                                    fetch(eventsUrl, {
+                                                        method: 'POST',
+                                                        body: JSON.stringify(event),
+                                                        headers: {
+                                                            'Authorization' : basicAuth,
+                                                            'Content-type': 'application/json',
+                                                        },
+                                                        credentials: "include"
+
+                                                    })
+                                                        .then(response => {
+                                                            console.log(response);
+
+                                                            if(response.status === 200 || response.status === 201){
+                                                                console.log("posted events");
+                                                                setMessageText("Successfully posted Events.");
+                                                            } else {
+                                                                console.log("Failed to post events");
+                                                            }
+                                                        })
+                                                        .catch((error) => {
+                                                            console.log("Failed to post events");
+                                                        });
+                                                });
+                                            } else {
+                                                console.log("Failed to post enrolments");
+                                            }
+                                        })
+                                        .catch((error) => {
+                                            console.log("Failed to post enrolments");
+                                        });
                                 });
 
-                                fetch(instanceUrl, {
-                                    method: 'POST',
-                                    body: JSON.stringify(instance),
-                                    headers: {
-                                        'Authorization' : basicAuth,
-                                        'Content-type': 'application/json',
-                                    },
-                                    credentials: "include"
 
-                                })
-                                    .then(response => {
-                                        console.log(response);
-
-                                        if(response.status === 200 || response.status === 201){
-                                            console.log("posted instances");
-                                            var rounded = Math.round(number * 10) / 10
-                                            setStatus(rounded);
-                                            setException(false);
-
-                                            enrolmentArray.map((enrol) => {
-                                                fetch(enrolUrl, {
-                                                    method: 'POST',
-                                                    body: JSON.stringify(enrol),
-                                                    headers: {
-                                                        'Authorization' : basicAuth,
-                                                        'Content-type': 'application/json',
-                                                    },
-                                                    credentials: "include"
-
-                                                })
-                                                    .then(response => {
-                                                        console.log(response);
-
-                                                        if(response.status === 200 || response.status === 201){
-                                                            console.log("posted enrolments");
-
-                                                            eventsArray.map((event) => {
-                                                                fetch(eventsUrl, {
-                                                                    method: 'POST',
-                                                                    body: JSON.stringify(event),
-                                                                    headers: {
-                                                                        'Authorization' : basicAuth,
-                                                                        'Content-type': 'application/json',
-                                                                    },
-                                                                    credentials: "include"
-
-                                                                })
-                                                                    .then(response => {
-                                                                        console.log(response);
-
-                                                                        if(response.status === 200 || response.status === 201){
-                                                                            console.log("posted events");
-                                                                        } else {
-                                                                            console.log("Failed to post events");
-                                                                        }
-                                                                    })
-                                                                    .catch((error) => {
-                                                                        console.log("Failed to post events");
-                                                                    });
-                                                            });
-                                                        } else {
-                                                            console.log("Failed to post enrolments");
-                                                        }
-                                                    })
-                                                    .catch((error) => {
-                                                        console.log("Failed to post enrolments");
-                                                    });
-                                            });
-
-
-
-                                        } else {
-                                            console.log("Failed to post instances");
-                                        }
-                                    })
-                                    .catch((error) => {
-                                        setException(true);
-                                        setModal("Failed to post instances due to an error : " + error.message);
-                                        console.log("Failed to post instances");
-                                    });
-                            });
+                            } else {
+                                console.log("Failed to post instances");
+                            }
+                        })
+                        .catch((error) => {
+                            setException(true);
+                            setModal("Failed to post instances due to an error : " + error.message);
+                            console.log("Failed to post instances");
                         });
+                });
+            });
         })
     }
 
@@ -312,12 +323,13 @@ const MainForm = (props) => {
                             <Modal title="Alert" visible={alertModal} onOk={()=>{}} onCancel={()=>{handleCancel()}}>
                                 <div className="d-flex flex-column w-100 align-items-center">
                                     <MDBCardText>
-                                        {exception ? <strong>{modal}</strong> :
-                                            <>{status === 100 ? <strong>Successfully transferred events</strong> : <strong>transferring events...</strong>}</>
-                                        }
+                                        {messageText}
 
                                     </MDBCardText>
-                                    <Progress type="circle" percent={status} status={ exception ? "exception" : "success"}/>
+                                    {showLoading ? <div className="spinner-border mx-2 text-white spinner-border text-center" role="status">
+                                        <span className="sr-only">Loading...</span>
+                                    </div> : null}
+                                    <Progress type="circle" percent={status} status={statusText}/>
                                 </div>
 
                             </Modal>
@@ -402,9 +414,7 @@ const MainForm = (props) => {
                                 <MDBBtn color="mdb-color" rounded className="text-white" onClick={() => {
                                     handleTransfer();
                                 }}>
-                                    transfer{showLoading ? <div className="spinner-border mx-2 text-white spinner-border-sm" role="status">
-                                    <span className="sr-only">Loading...</span>
-                                </div> : null}
+                                    transfer
                                 </MDBBtn>
                             </div>
 
