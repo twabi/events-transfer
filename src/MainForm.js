@@ -42,7 +42,7 @@ const MainForm = (props) => {
     const [exception, setException] = useState(false);
     const [statusText, setStatusText] = useState("normal");
     const [messageText, setMessageText] = useState("Found no instances to transfer");
-    const [trackedInstances, setTrackedInstances] = useState([]);
+    //const [trackedInstances, setTrackedInstances] = useState([]);
 
     const handleCancel = () => {
         setAlertModal(false);
@@ -138,6 +138,7 @@ const MainForm = (props) => {
         </Menu>
     );
 
+    var trackedInstances = [];
     function checkName (a, b){
         var nameOne = a.attributes[0].value;
         var nameTwo = b.attributes[0].value;
@@ -191,12 +192,12 @@ const MainForm = (props) => {
                     setMessageText("Found " +response.trackedEntityInstances.length+" instances. Transferring events.....")
                 }
 
-                var instanceArray = [];
-                instanceArray = response.trackedEntityInstances;
-                setTrackedInstances(instanceArray);
-                instanceArray.sort(checkName);
-
+                //var instanceArray = [];
+                trackedInstances = response.trackedEntityInstances;
+                //setTrackedInstances(instanceArray);
+                trackedInstances.sort(checkName);
                 console.log(trackedInstances);
+
                 setStatus(50);
                 var enrolmentArray = [];
                 var eventsArray = [];
