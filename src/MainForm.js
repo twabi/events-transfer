@@ -139,29 +139,6 @@ const MainForm = (props) => {
     );
 
     var trackedInstances = [];
-    function checkName (a, b){
-        var nameOne = a.attributes[0].value;
-        var nameTwo = b.attributes[0].value;
-
-        //console.log(nameOne, nameTwo);
-        console.log(fuzz.partial_ratio(nameOne, nameTwo),fuzz.token_set_ratio(nameOne, nameTwo), fuzz.ratio(nameOne, nameTwo));
-
-        if((fuzz.partial_ratio(nameOne, nameTwo) > 60) &&
-            (fuzz.token_set_ratio(nameOne, nameTwo) > 70) && (fuzz.ratio(nameOne, nameTwo) > 80)){
-            console.log("similar crops");
-            a.enrollments = [...a.enrollments, ...b.enrollments]
-            var indexA = trackedInstances.findIndex(x => x.trackedEntityInstance === b.trackedEntityInstance);
-            console.log(trackedInstances[indexA], a.enrollments);
-            trackedInstances[indexA].enrollments = a.enrollments;
-
-            var indexB = trackedInstances.findIndex(x => x.trackedEntityInstance === b.trackedEntityInstance);
-            //trackedInstances.splice(indexB, 1);
-
-
-            return a;
-        }
-    }
-
 
     const handleTransfer = () => {
 
@@ -355,9 +332,7 @@ const MainForm = (props) => {
                             console.log("Failed to post instances");
                         });
                 });
-
-
-
+                
             });
         })
     }

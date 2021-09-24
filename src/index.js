@@ -8,7 +8,7 @@ import "font-awesome/css/font-awesome.min.css";
 import "bootstrap-css-only/css/bootstrap.min.css";
 import App from "./App";
 import reportWebVitals from "./reportWebVitals";
-import { init } from "d2";
+import {getInstance, init} from "d2";
 import {HashRouter} from "react-router-dom";
 import { Provider } from '@dhis2/app-runtime'
 
@@ -23,6 +23,12 @@ const appConfig = {
         withCredentials: true
     }
 }
+getInstance().then((d2) => {
+    var endpoint = "/me";
+    d2.Api.getApi().get(endpoint).then((response) => {
+        console.log(response)
+    })
+})
 
 const developmentServer = "https://covmw.com/maintest/api/";
 const withBaseUrl = (baseUrl) => {
