@@ -39,7 +39,6 @@ const MainForm = (props) => {
     const [modal, setModal] = useState();
     const [alertModal, setAlertModal] = useState(false);
     const [status, setStatus] = useState(0);
-    const [exception, setException] = useState(false);
     const [statusText, setStatusText] = useState("normal");
     const [messageText, setMessageText] = useState("Found no instances to transfer");
     //const [trackedInstances, setTrackedInstances] = useState([]);
@@ -142,6 +141,7 @@ const MainForm = (props) => {
 
     const handleTransfer = () => {
 
+        setStatusText("normal");
         setShowLoading(true);
         setMessageText("Looking trackedEntityInstances....");
         setAlertModal(true);
@@ -245,16 +245,15 @@ const MainForm = (props) => {
                                 console.log("posted instances");
                                 setTimeout(() => {
                                     setStatus(60);
+                                    setStatusText("normal");
                                     setMessageText("Posting trackedEntityInstances...");
                                 }, 2000);
                                 //setMessageText("Successfully posted trackedEntityInstances.");
                                 //
                                 setShowLoading(false);
-                                setException(false);
 
                                 var rounded = Math.round(number * 10) / 10
                                 setStatus(rounded);
-                                setException(false);
 
                                 enrolmentArray.map((enrol) => {
                                     fetch(enrolUrl, {
@@ -274,12 +273,14 @@ const MainForm = (props) => {
                                                 console.log("posted enrolments");
                                                 setTimeout(() => {
                                                     setStatus(85);
+                                                    setStatusText("normal");
                                                     setMessageText("Posting enrollments...");
                                                 }, 2000);
 
                                                 eventsArray.map((event) => {
                                                     setTimeout(() => {
                                                         setStatus(99);
+                                                        setStatusText("normal");
                                                         setMessageText("Posting event...");
                                                         //setStatusText("success");
                                                     }, 1000);
@@ -305,11 +306,14 @@ const MainForm = (props) => {
                                                                 }, 1000);
 
                                                             } else {
-                                                                console.log("Failed to post events");
+                                                                setMessageText("Failed to post event due to an error");
+                                                                setStatusText("exception");
                                                             }
                                                         })
                                                         .catch((error) => {
                                                             console.log("Failed to post events");
+                                                            setMessageText("Failed to post events due to an error");
+                                                            setStatusText("exception");
                                                         });
                                                 });
                                             } else {
@@ -318,21 +322,24 @@ const MainForm = (props) => {
                                         })
                                         .catch((error) => {
                                             console.log("Failed to post enrolments");
+                                            setMessageText("Failed to post enrolment due to an error");
+                                            setStatusText("exception");
                                         });
                                 });
 
 
                             } else {
                                 console.log("Failed to post instances");
+                                setMessageText("Failed to post instance due to an error");
+                                setStatusText("exception");
                             }
                         })
                         .catch((error) => {
-                            setException(true);
                             setModal("Failed to post instances due to an error : " + error.message);
                             console.log("Failed to post instances");
                         });
                 });
-                
+
             });
         })
     }
