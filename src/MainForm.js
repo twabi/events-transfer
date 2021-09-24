@@ -215,7 +215,11 @@ const MainForm = (props) => {
                 }, 3000);
 
                 trackedInstances.map((temp) => {
-                    console.log(temp.attributes[0].value, temp.attributes[1].value)
+                    var instance = temp.trackedEntityInstance;
+                    console.log(temp.attributes[0].value, temp.attributes[1].value);
+                    temp.enrollments.map((enrol) => {
+                       enrol.trackedEntityInstance = instance;
+                    });
                 });
 
 
@@ -304,6 +308,7 @@ const MainForm = (props) => {
                                                                     setMessageText("Posted events!");
                                                                     setStatusText("success");
                                                                 }, 1000);
+
 
                                                             } else {
                                                                 setMessageText("Failed to post event due to an error");
