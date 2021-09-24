@@ -143,6 +143,8 @@ const MainForm = (props) => {
         var nameOne = a.attributes[0].value;
         var nameTwo = b.attributes[0].value;
 
+        //console.log(nameOne, nameTwo);
+        console.log(fuzz.partial_ratio(nameOne, nameTwo),fuzz.token_set_ratio(nameOne, nameTwo), fuzz.ratio(nameOne, nameTwo));
 
         if((fuzz.partial_ratio(nameOne, nameTwo) > 60) &&
             (fuzz.token_set_ratio(nameOne, nameTwo) > 70) && (fuzz.ratio(nameOne, nameTwo) > 80)){
@@ -153,12 +155,13 @@ const MainForm = (props) => {
             trackedInstances[indexA].enrollments = a.enrollments;
 
             var indexB = trackedInstances.findIndex(x => x.trackedEntityInstance === b.trackedEntityInstance);
-            trackedInstances.splice(indexB, 1);
+            //trackedInstances.splice(indexB, 1);
 
 
             return a;
         }
     }
+
 
     const handleTransfer = () => {
 
@@ -189,16 +192,56 @@ const MainForm = (props) => {
                     setShowLoading(false);
                 } else {
                     //setException(false);
-                    setMessageText("Found " +response.trackedEntityInstances.length+" instances. Transferring events.....")
+                    setTimeout(() => {
+                        setMessageText("Found " +response.trackedEntityInstances.length+" instances. Finding duplicate instances.....")
+                    }, 1000);
+
                 }
 
-                //var instanceArray = [];
                 trackedInstances = response.trackedEntityInstances;
-                //setTrackedInstances(instanceArray);
-                trackedInstances.sort(checkName);
+
+                for(var x = trackedInstances.length-1; x >= 0; x--){
+                    var name2 = trackedInstances[x].attributes[0].value;
+                    var instance2ID = trackedInstances[x].trackedEntityInstance;
+                    //console.log(name2);
+                    for(var y = 0; y < trackedInstances.length; y++){
+                        var name = trackedInstances[y].attributes[0].value;
+                        var instanceID = trackedInstances[y].trackedEntityInstance;
+                        //console.log(name);
+                        if(name === name2 && instance2ID !== instanceID){
+
+                            if(trackedInstances[x] !== undefined){
+                                trackedInstances[y].enrollments = [...trackedInstances[y].enrollments, ...trackedInstances[x].enrollments];
+                                console.log(trackedInstances[y].enrollments);
+                                trackedInstances.splice(x, 1);
+
+                                setTimeout(() => {
+                                    setMessageText("Found duplicates... Merging...");
+                                }, 1000);
+
+                            }
+
+                        } else {
+                            setTimeout(() => {
+                                setMessageText("No duplicate instances found");
+                            }, 2000);
+
+
+                        }
+                    }
+                }
                 console.log(trackedInstances);
 
-                setStatus(50);
+                setTimeout(() => {
+                    setStatus(40);
+                    setMessageText("Posting instances, enrollments and events");
+                }, 3000);
+
+                trackedInstances.map((temp) => {
+                    console.log(temp.attributes[0].value, temp.attributes[1].value)
+                });
+
+
                 var enrolmentArray = [];
                 var eventsArray = [];
 
@@ -223,8 +266,12 @@ const MainForm = (props) => {
 
                             if(response.status === 200 || response.status === 201){
                                 console.log("posted instances");
-                                setMessageText("Successfully posted trackedEntityInstances.");
-                                setStatusText("success");
+                                setTimeout(() => {
+                                    setStatus(60);
+                                    setMessageText("Posting trackedEntityInstances...");
+                                }, 2000);
+                                //setMessageText("Successfully posted trackedEntityInstances.");
+                                //
                                 setShowLoading(false);
                                 setException(false);
 
@@ -248,9 +295,17 @@ const MainForm = (props) => {
 
                                             if(response.status === 200 || response.status === 201){
                                                 console.log("posted enrolments");
-                                                setMessageText("Successfully posted Enrollments.");
+                                                setTimeout(() => {
+                                                    setStatus(85);
+                                                    setMessageText("Posting enrollments...");
+                                                }, 2000);
 
                                                 eventsArray.map((event) => {
+                                                    setTimeout(() => {
+                                                        setStatus(99);
+                                                        setMessageText("Posting event...");
+                                                        //setStatusText("success");
+                                                    }, 1000);
                                                     fetch(eventsUrl, {
                                                         method: 'POST',
                                                         body: JSON.stringify(event),
@@ -266,7 +321,12 @@ const MainForm = (props) => {
 
                                                             if(response.status === 200 || response.status === 201){
                                                                 console.log("posted events");
-                                                                setMessageText("Successfully posted Events.");
+                                                                setTimeout(() => {
+                                                                    //setStatus(99);
+                                                                    setMessageText("Posted events!");
+                                                                    setStatusText("success");
+                                                                }, 1000);
+
                                                             } else {
                                                                 console.log("Failed to post events");
                                                             }
@@ -295,6 +355,9 @@ const MainForm = (props) => {
                             console.log("Failed to post instances");
                         });
                 });
+
+
+
             });
         })
     }
