@@ -26,6 +26,7 @@ function App() {
       const endpoint = "programs.json?paging=false";
       const unitEndpoint = "organisationUnits.json?paging=false&fields=name&fields=level&fields=id&fields=parent";
       const marketsEndPoint = "organisationUnitGroups/Lp9RVPodv0V.json?fields=organisationUnits[id,name,level,ancestors[id,name,level,parent]]";
+
       d2.Api.getApi().get(endpoint)
           .then((response) => {
             //console.log(response.programs);
